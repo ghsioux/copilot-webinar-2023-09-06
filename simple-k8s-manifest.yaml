@@ -1,0 +1,78 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ubuntu-sleeper
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ubuntu-sleeper
+  template:
+    metadata:
+      labels:
+        app: ubuntu-sleeper
+    spec:
+      containers:
+      - name: ubuntu-sleeper
+        image: ubuntu
+        command:
+          - "/bin/sh"
+          - "-c"
+          - |
+            echo 'Updating CA certificate...'
+            echo $CA_CERTIFICATE > /usr/local/share/ca-certificates/tls.crt
+            update-ca-certificates
+        lifecycle:
+          postStart:
+            exec:
+              command:
+                - "/bin/sh"
+                - "-c"
+                - |
+                  echo 'Updating CA certificate...'
+                  echo $CA_CERTIFICATE > /usr/local/share/ca-certificates/tls.crt
+                  update-ca-certificates
+        env:
+        - name: CA_CERTIFICATE
+          valueFrom:
+            configMapKeyRef:
+              name: tls-cert
+              key: tls.crt
+        volumeMounts:
+        - name: tls-cert
+          mountPath: /tmp/tls.crt
+          subPath: tls.crt
+      volumes:
+      - name: tls-cert
+        configMap:
+          name: tls-cert
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: tls-cert
+data:
+  tls.crt: |
+    -----BEGIN CERTIFICATE-----
+    MIIDwTCCAqmgAwIBAgIUGrUlK8ODs20ictfer2CLovDevMwwDQYJKoZIhvcNAQEL
+    BQAwTDEXMBUGA1UEAwwOMjAuMjM0LjEzNC4xNTExMTAvBgNVBAoMKEdpdEh1YiBB
+    dXRvbWF0aWMgU2VsZiBTaWduZWQgQ2VydGlmaWNhdGUwHhcNMjMwOTA2MTI0MjM4
+    WhcNMjQwOTA1MTI0MjM4WjBMMRcwFQYDVQQDDA4yMC4yMzQuMTM0LjE1MTExMC8G
+    A1UECgwoR2l0SHViIEF1dG9tYXRpYyBTZWxmIFNpZ25lZCBDZXJ0aWZpY2F0ZTCC
+    ASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBANa2AdXRZIaSgpW1jTaNq9yF
+    Dzwbo0BtP84zexYec1G7oQ1mkkKAMvaAAOCQprnPH0cvSQGn8IQY4DWY0qP4ePwP
+    QlB5bBWXjTjIgoq+/2e1X3IfvZ8882VNhk+JWZEwz7lvGcvIGi261xXBcR2HIZ0W
+    MLywar0OEEXUCfx2Bbn0m/hWJXtryFzruk+hoODNzKafLgxtau3aQ5rDkLtafO9U
+    oYS0BVQ7iPL5v+GWMuhoPNUkpq8ndrlTPNuO3EaJPrhJuqY0pLSQxt/UCIt5AwqT
+    tJQyyPmSjg+0qpZ1CeSgsAZecS/yYgTEAdcm22gUKLQWPNIKJKwafG5FL9DUylkC
+    AwEAAaOBmjCBlzAdBgNVHQ4EFgQUVsMpv1QTBSS2SxbmDsdy6Ii07X4wHwYDVR0j
+    BBgwFoAUVsMpv1QTBSS2SxbmDsdy6Ii07X4wDAYDVR0TBAUwAwEB/zAvBgNVHREE
+    KDAmhwQU6oaXgg4yMC4yMzQuMTM0LjE1MYcECgABBIIIMTAuMC4xLjQwFgYDVR0l
+    AQH/BAwwCgYIKwYBBQUHAwEwDQYJKoZIhvcNAQELBQADggEBANKKrTTAlTg8vEv2
+    3PjTiU6JMZ1jPaCQp3a+q3cOm2gefeZrGnOvLI0eTkiQeslw1wvf6RSJ55F6BhEO
+    tcpR8o0TuvI5k+9OHbnogamdKa065mV/ymQESHKT5+XcKWM79dbTxUrvR5dd7ZrC
+    v9xs0ayFCBCu+NPbrmg6nEu/OiGp0Rr6PtN2kRNnpigGjjf/GUg7NG77pGDrfCdH
+    3aI0rEGq8ikXq6BiMahC1I8Um6ja0OCWaEZ7O3udrTTnUer5edSFQ/1WyRZDtJiG
+    LxLS+YiDwZ1IvYmwkKE+piaSrCDgGrBYkGgcdU0kx2eAbp7FiAAGaPA8GWPa2KXn
+    V5HI4aA=
+    -----END CERTIFICATE-----
